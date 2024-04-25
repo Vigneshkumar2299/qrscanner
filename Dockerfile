@@ -1,32 +1,17 @@
 # Use the official lightweight Python image
 FROM python:3.9-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# Set the working directory in the container
+# Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    libgl1-mesa-dev \
-    libglib2.0-0 \
-    libsm6 \
-    libxrender-dev \
-    libxext6 \
-    libopencv-dev
-
-# Copy the dependencies file to the working directory
+# Copy and install requirements
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the current directory contents into the container at /app
+# Copy the application code
 COPY . .
 
-# Expose port 8080 to allow communication to/from server
+# Expose port 8080
 EXPOSE 8080
 
 # Command to run the application
