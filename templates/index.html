@@ -1,35 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Scan Result</title>
-    <script src="https://rawgit.com/sitepoint-editors/jsqrcode/master/src/qr_packed.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload QR Code</title>
 </head>
 <body>
-    <h1>Scan Result</h1>
-    <h2>Machine Info:</h2>
-    <p>Name: <span id="machineName"></span></p>
-    <p>Serial Number: <span id="serialNumber"></span></p>
-    <button onclick="openScanner()">Scan QR Code</button>
-
+<form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+<input type="file" id="fileInput" name="file" onchange="submitForm()">
+</form>
+ 
+    <div id="machineDetails"></div>
+ 
     <script>
-        function openScanner() {
-            var scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
-            scanner.addListener('scan', function (content) {
-                var machineInfo = JSON.parse(content);
-                document.getElementById('machineName').innerText = machineInfo.name;
-                document.getElementById('serialNumber').innerText = machineInfo.serial_number;
-                scanner.stop();
-            });
-            Instascan.Camera.getCameras().then(function (cameras) {
-                if (cameras.length > 0) {
-                    scanner.start(cameras[0]);
-                } else {
-                    console.error('No cameras found.');
-                }
-            }).catch(function (e) {
-                console.error(e);
-            });
+        function submitForm() {
+            document.getElementById("uploadForm").submit();
         }
-    </script>
+ 
+        function displayMachineDetails(details) {
+            var detailsContainer = document.getElementById("machineDetails");
+            detailsContainer.innerHTML = "<p>Name: " + details.name + "</p><p>Serial Number: " + details.serial_number + "</p>";
+        }
+ 
+        async function fetchMachineDetails() {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: new FormData(document.getElementById('uploadForm'))
+            });
+            const data = await response.json();
+            displayMachineDetails(data);
+        }
+ 
+        document.getElementById("fileInput").addEventListener("change", fetchMachineDetails);
+</script>
 </body>
 </html>
