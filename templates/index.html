@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scan QR Code</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+</head>
+<body>
+    <h1>Scan QR Code</h1>
+    <button id="scanButton">Scan QR Code</button>
+    <div id="qrResult"></div>
+
+    <script>
+        document.getElementById('scanButton').addEventListener('click', function() {
+            // Use getUserMedia to access the user's camera
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(function(stream) {
+                // Create a video element to stream the camera feed
+                var video = document.createElement('video');
+                video.setAttribute('autoplay', true);
+                video.srcObject = stream;
+                document.body.appendChild(video);
+
+                // Create a canvas element to capture the video frame
+                var canvas = document.createElement('canvas');
+                var context = canvas.getContext('2d');
+                video.addEventListener('loadedmetadata', function() {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                });
+
+                // Scan for QR codes every 500ms
+                var qrResultDiv = document.getElementById('qrResult');
+                var scanInterval = setInterval(function() {
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    var code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: 'dontInvert'
+                    });
+                    if (code) {
+                        qrResultDiv.innerHTML = '<p>Scanned Data: ' + code.data + '</p>';
+                        clearInterval(scanInterval);
+                        stream.getTracks().forEach(function(track) {
+                            track.stop(); // Stop the camera stream
+                        });
+                        video.remove(); // Remove the video element
+                        canvas.remove(); // Remove the canvas element
+                    }
+                }, 500);
+            })
+            .catch(function(error) {
+                console.error('Error accessing the camera:', error);
+            });
+        });
+    </script>
+</body>
+</html>
