@@ -3,35 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Upload QR Code</title>
+<title>QR Scanner</title>
+<script src="https://cdn.jsdelivr.net/npm/instascan@2"></script>
 </head>
 <body>
-<form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
-<input type="file" id="fileInput" name="file" onchange="submitForm()">
-</form>
- 
-    <div id="machineDetails"></div>
+<video id="preview"></video>
+<div id="machineDetails"></div>
  
     <script>
-        function submitForm() {
-            document.getElementById("uploadForm").submit();
-        }
+        var scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
+        scanner.addListener('scan', function(content) {
+            fetchMachineDetails(content);
+        });
+        Instascan.Camera.getCameras().then(function(cameras) {
+            if (cameras.length > 0) {
+                scanner.start(cameras[0]);
+            } else {
+                console.error('No cameras found.');
+            }
+        }).catch(function(e) {
+            console.error(e);
+        });
  
         function displayMachineDetails(details) {
             var detailsContainer = document.getElementById("machineDetails");
             detailsContainer.innerHTML = "<p>Name: " + details.name + "</p><p>Serial Number: " + details.serial_number + "</p>";
         }
  
-        async function fetchMachineDetails() {
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: new FormData(document.getElementById('uploadForm'))
-            });
+        async function fetchMachineDetails(serial_number) {
+            const response = await fetch('/details/' + serial_number);
             const data = await response.json();
             displayMachineDetails(data);
         }
- 
-        document.getElementById("fileInput").addEventListener("change", fetchMachineDetails);
 </script>
 </body>
 </html>
