@@ -53,11 +53,12 @@ def decode_qr(uploaded_file):
     else:
         return None
  
+@app.route('/details/<serial_number>')
 def get_machine_details(serial_number):
     for machine in machine_data:
         if machine["serial_number"] == serial_number:
-            return machine
-    return None
+            return jsonify(machine)
+    return jsonify({"error": "Machine details not found for serial number " + serial_number})
  
 if __name__ == '__main__':
     app.run(debug=True)
