@@ -1,11 +1,11 @@
 import qrcode
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 import cv2
 from PIL import Image
 import numpy as np
-
+ 
 app = Flask(__name__)
-
+ 
 # Data for each machine (you can replace this with your actual machine data)
 machine_data = [
     {"name": "Machine 1", "serial_number": "123456"},
@@ -21,19 +21,26 @@ machine_data = [
     {"name": "Machine 11", "serial_number": "345678"},
     {"name": "Machine 12", "serial_number": "901234"}
 ]
-
+ 
 @app.route('/')
 def index():
     return render_template('index.html')
-
+ 
 @app.route('/upload', methods=['POST'])
 def upload_file():
     uploaded_file = request.files['file']
     if uploaded_file.filename != '':
         decoded_data = decode_qr(uploaded_file)
-        return f"Decoded data: {decoded_data}"
-    return "No file uploaded"
-
+        if decoded_data:
+            machine_details = get_machine_details(decoded_data)
+            if machine_details:
+                return jsonify(machine_details)
+            else:
+                return "Machine details not found."
+        else:
+            return "No QR code detected."
+    return "No file uploaded."
+ 
 def decode_qr(uploaded_file):
     image_stream = uploaded_file.read()
     nparr = np.frombuffer(image_stream, np.uint8)
@@ -44,7 +51,13 @@ def decode_qr(uploaded_file):
     if bbox is not None:
         return data
     else:
-        return "No QR code detected"
-
+        return None
+ 
+def get_machine_details(serial_number):
+    for machine in machine_data:
+        if machine["serial_number"] == serial_number:
+            return machine
+    return None
+ 
 if __name__ == '__main__':
     app.run(debug=True)
