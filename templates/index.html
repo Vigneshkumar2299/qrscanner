@@ -1,40 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR Scanner</title>
-<script src="https://cdn.jsdelivr.net/npm/instascan@2"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload QR Code</title>
+    <!-- Include Instascan library -->
+    <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
 </head>
 <body>
-<video id="preview"></video>
-<div id="machineDetails"></div>
- 
+    <!-- Button to trigger the scan -->
+    <button id="scanButton">Scan QR Code</button>
+
+    <!-- Video element to display the camera feed -->
+    <video id="preview" style="display:none;"></video>
+
+    <div id="machineDetails"></div>
+
     <script>
-        var scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
+        // Initialize the scanner
+        let scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
+
+        // When a QR code is scanned
         scanner.addListener('scan', function(content) {
-            fetchMachineDetails(content);
+            // Show the scanned content
+            console.log(content);
+            displayMachineDetails(JSON.parse(content)); // Assuming the content is JSON
+            scanner.stop(); // Stop the scanner after a successful scan
         });
-        Instascan.Camera.getCameras().then(function(cameras) {
-            if (cameras.length > 0) {
-                scanner.start(cameras[0]);
-            } else {
-                console.error('No cameras found.');
-            }
-        }).catch(function(e) {
-            console.error(e);
+
+        // Function to open the scanner when the button is clicked
+        document.getElementById('scanButton').addEventListener('click', function() {
+            // Show the camera feed
+            document.getElementById('preview').style.display = 'block';
+
+            // Start the scanner
+            Instascan.Camera.getCameras().then(function(cameras) {
+                if (cameras.length > 0) {
+                    scanner.start(cameras[0]);
+                } else {
+                    console.error('No cameras found.');
+                }
+            }).catch(function(e) {
+                console.error(e);
+            });
         });
- 
+
         function displayMachineDetails(details) {
             var detailsContainer = document.getElementById("machineDetails");
             detailsContainer.innerHTML = "<p>Name: " + details.name + "</p><p>Serial Number: " + details.serial_number + "</p>";
         }
- 
-        async function fetchMachineDetails(serial_number) {
-            const response = await fetch('/details/' + serial_number);
-            const data = await response.json();
-            displayMachineDetails(data);
-        }
-</script>
+    </script>
 </body>
 </html>
