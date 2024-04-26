@@ -3,48 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Scanner</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Bar Code Scanner App</title>
+    <!-- <link rel="stylesheet" href="/css/style.css"> -->
+    <script src="../static/html5-qrcode.min.js"></script>
 </head>
-<body>
-    <h1>QR Code Scanner</h1>
-    <video id="video" width="640" height="480" autoplay></video>
-    <canvas id="canvas" style="display: none;"></canvas>
-    <button onclick="scanQR()">Scan QR Code</button>
-    <p id="qrResult"></p>
-
+<body data-rsssl=1>
+    <div class="container">
+        <main class="main">
+            <div id="reader"></div>
+            <div id="result"></div>
+            <div id="view_result">
+            </div>
+        </main>
+    </div>
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const qrResult = document.getElementById('qrResult');
 
-        function scanQR() {
-            const constraints = {
-                video: true
-            };
-
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(function(stream) {
-                    video.srcObject = stream;
-                    video.play();
-                })
-                .catch(function(err) {
-                    console.error('Error accessing the webcam: ', err);
-                });
-
-            video.addEventListener('canplay', function(ev) {
-                const context = canvas.getContext('2d');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
-                if (qrCode) {
-                    qrResult.textContent = 'QR Code detected: ' + qrCode.data;
-                } else {
-                    qrResult.textContent = 'No QR Code detected.';
-                }
-            });
+        const scanner = new Html5QrcodeScanner('reader', {
+            qrbox: {
+                width: 500,
+                height: 500,
+            },
+            fps: 20,
+        });
+        scanner.render(success, error);
+        async function success(result) {
+           console.log(result)
+            scanner.clear();
+        }
+        function error(err) {
+            console.error(err);
+        }
+        function restartScan() {
+            location.reload(true);
         }
     </script>
 </body>
