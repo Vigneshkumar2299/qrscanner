@@ -1,41 +1,52 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 import qrcode
+from google.cloud import bigquery
+import os
 
 app = Flask(__name__)
 
-# Data for each machine (you can replace this with your actual machine data)
-machine_data = [
-    {"name": "Machine 1", "serial_number": "123456"},
-    {"name": "Machine 2", "serial_number": "789012"},
-    {"name": "Machine 3", "serial_number": "345678"},
-    {"name": "Machine 4", "serial_number": "901234"},
-    {"name": "Machine 5", "serial_number": "567890"},
-    {"name": "Machine 6", "serial_number": "234567"},
-    {"name": "Machine 7", "serial_number": "890123"},
-    {"name": "Machine 8", "serial_number": "456789"},
-    {"name": "Machine 9", "serial_number": "012345"},
-    {"name": "Machine 10", "serial_number": "678901"},
-    {"name": "Machine 11", "serial_number": "345678"},
-    {"name": "Machine 12", "serial_number": "901234"}
-]
+# Initialize BigQuery client
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gkey.json"
+client = bigquery.Client()
 
-# Generate and save QR codes for each machine
-for machine in machine_data:
-    data = f"Machine Name: {machine['name']}\nSerial Number: {machine['serial_number']}"
-    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
-    qr.add_data(data)
-    qr.make(fit=True)
-
-    # Create an image from the QR code
-    img = qr.make_image(fill_color="black", back_color="white")
-
-    # Save the QR code image
-    img.save(f"static/{machine['name'].replace(' ', '_')}_QRCode.png")
+# Example machine data
+MACHINE_DATA = [{"DeviceID": f"100{i}"} for i in range(1, 13)]
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', machine_data=MACHINE_DATA)
+
+@app.route('/machine_details/<device_id>')
+def machine_details(device_id):
+    try:
+        device_id_numeric = device_id.split(':')[1].strip()
+        device_id_int = int(device_id_numeric)
+
+        # Query BigQuery for machine details based on DeviceID
+        query = "SELECT Machine_No, Unit FROM `shining-wharf-418413.bq_idle.machine_status` WHERE DeviceID = @device_id"
+        job_config = bigquery.QueryJobConfig(query_parameters=[bigquery.ScalarQueryParameter("device_id", "INT64", device_id_int)])
+        query_job = client.query(query, job_config=job_config)
+        results = query_job.result()
+        machine_details = [dict(row) for row in results]
+        return jsonify(machine_details)
+    except (ValueError, IndexError):
+        return "Invalid device ID", 400
+
+@app.route('/qr_code/<device_id>')
+def generate_qr_code(device_id):
+    try:
+        data = f"Machine Name: {device_id}"
+        qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+        qr.add_data(data)
+        qr_image = qr.make_image(fill_color="black", back_color="white")
+
+        # You might want to save the QR code image or return it directly based on your requirements
+        # qr_image.save(f"static/{device_id.replace(' ', '_')}_QRCode.png")
+
+        # For simplicity, returning the image as a response
+        return qr_image
+    except Exception as e:
+        return str(e), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
- 
