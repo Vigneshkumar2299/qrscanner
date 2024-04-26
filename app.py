@@ -32,29 +32,33 @@ def decode_qr(uploaded_file):
         return data
     else:
         return "No QR code detected"
-
 # Route for scanning QR code using webcam
 @app.route('/scan')
 def scan_qr():
-    cap = cv2.VideoCapture(0)
     detector = cv2.QRCodeDetector()
+    
+    # Try different camera indices
+    for index in range(4):
+        cap = cv2.VideoCapture(index)
+        if not cap.isOpened():
+            continue  # Try the next index if the camera is not opened
+        while True:
+            ret, img = cap.read()
+            if not ret:
+                continue  # Skip empty frames
+            data, _, _ = detector.detectAndDecode(img)
+            if data:
+                cap.release()
+                cv2.destroyAllWindows()
+                return f"Scanned QR data: {data}"
+            cv2.imshow('Scan QR Code', img)
+            if cv2.waitKey(1) == ord('q'):
+                break
+        cap.release()
 
-    while True:
-        ret, img = cap.read()
-        if not ret:
-            continue  # Skip empty frames
-        data, _, _ = detector.detectAndDecode(img)
-        if data:
-            cap.release()
-            cv2.destroyAllWindows()
-            return f"Scanned QR data: {data}"
-        cv2.imshow('Scan QR Code', img)
-        if cv2.waitKey(1) == ord('q'):
-            break
-
-    cap.release()
     cv2.destroyAllWindows()
     return "No QR code detected"
+
 
 if __name__ == '__main__':
     app.run(debug=True)
