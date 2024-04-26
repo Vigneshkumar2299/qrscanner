@@ -40,7 +40,9 @@ def scan_qr():
     detector = cv2.QRCodeDetector()
 
     while True:
-        _, img = cap.read()
+        ret, img = cap.read()
+        if not ret:
+            continue  # Skip empty frames
         data, _, _ = detector.detectAndDecode(img)
         if data:
             cap.release()
