@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_from_directory, jsonify
+from flask import Flask, render_template
 import qrcode
 
 app = Flask(__name__)
@@ -19,24 +19,23 @@ machine_data = [
     {"name": "Machine 12", "serial_number": "901234"}
 ]
 
+# Generate and save QR codes for each machine
+for machine in machine_data:
+    data = f"Machine Name: {machine['name']}\nSerial Number: {machine['serial_number']}"
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+    qr.add_data(data)
+    qr.make(fit=True)
+
+    # Create an image from the QR code
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    # Save the QR code image
+    img.save(f"static/{machine['name'].replace(' ', '_')}_QRCode.png")
+
 @app.route('/')
 def index():
-    return render_template('index.html', machine_data=machine_data)
-
-@app.route('/generate_qr/<name>')
-def generate_qr(name):
-    for machine in machine_data:
-        if machine['name'].replace(' ', '_') == name:
-            data = f"Machine Name: {machine['name']}\nSerial Number: {machine['serial_number']}"
-            qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
-            qr.add_data(data)
-            qr.make(fit=True)
-
-            # Create an image from the QR code
-            img = qr.make_image(fill_color="black", back_color="white")
-
-            # Return QR code image data
-            return img.get_image(), 200, {'Content-Type': 'image/png'}
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
+ 
