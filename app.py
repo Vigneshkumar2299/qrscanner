@@ -21,7 +21,7 @@ machine_data = [
 
 @app.route('/')
 def index():
-    return render_template('form.html', machine_data=machine_data)
+    return render_template('index.html', machine_data=machine_data)
 
 @app.route('/generate_qr/<name>')
 def generate_qr(name):
