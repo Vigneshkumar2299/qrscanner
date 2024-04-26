@@ -4,59 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bar Code Scanner App</title>
+    <link rel="stylesheet" href="/css/style.css">
     <script src="../static/html5-qrcode.min.js"></script>
 </head>
-<body data-rsssl=1>
-    <div class="container">
-        <main class="main">
-            <div id="reader"></div>
-            <div id="result"></div>
-            <div id="view_result">
-                <!-- Display machine details here -->
-                <h2 id="machineName"></h2>
-                <p id="serialNumber"></p>
-            </div>
-        </main>
-    </div>
-    <script>
-        const scanner = new Html5QrcodeScanner('reader', {
-            qrbox: {
-                width: 500,
-                height: 500,
-            },
-            fps: 20,
-        });
-        scanner.render(success, error);
+<body data-rsssl="1">
 
-        async function success(result) {
-            // Parse the result to extract machine name and serial number
-            const machineDetails = parseQRResult(result);
+<div class="container">
+    <main class="main">
+        <div id="reader"></div>
+        <div id="result"></div>
+        <div id="view_result">
+            <h2 id="DeviceID"></h2>
+            <div id="machineDetails"></div> <!-- Container for displaying machine details -->
+        </div>
+    </main>
+</div>
 
-            // Display machine details
-            document.getElementById("machineName").innerText = `Machine Name: ${machineDetails.name}`;
-            document.getElementById("serialNumber").innerText = `Serial Number: ${machineDetails.serialNumber}`;
+<script>
+    const scanner = new Html5QrcodeScanner('reader', {
+        qrbox: {
+            width: 300,
+            height: 300,
+        },
+        fps: 20,
+    });
 
-            scanner.clear();
+    scanner.render(onScanSuccess, onScanError);
+
+    async function onScanSuccess(qrCodeMessage) {
+        const machineDetails = await fetchMachineDetails(qrCodeMessage);
+        document.getElementById("DeviceID").innerText = `DeviceID: ${qrCodeMessage}`;
+        displayMachineDetails(machineDetails);
+        scanner.clear();
+    }
+
+    function onScanError(errorMessage) {
+        console.error(errorMessage);
+    }
+
+    async function fetchMachineDetails(deviceID) {
+        const response = await fetch(`/machine_details/${deviceID}`);
+        return response.json();
+    }
+
+    function displayMachineDetails(machineDetails) {
+        const machineDetailsContainer = document.getElementById('machineDetails');
+        machineDetailsContainer.innerHTML = ''; // Clear previous details
+
+        // Check if machine details exist
+        if (machineDetails.length > 0) {
+            // Create a list to display machine details
+            const detailList = document.createElement('ul');
+
+            // Loop through the details and add them to the list
+            machineDetails.forEach(detail => {
+                const listItem = document.createElement('li');
+                listItem.innerText = `${detail.Machine_No}: ${detail.Unit}`;
+                detailList.appendChild(listItem);
+            });
+
+            // Append the list to the machineDetailsContainer
+            machineDetailsContainer.appendChild(detailList);
+        } else {
+            // Display a message if no details found
+            machineDetailsContainer.innerText = 'No details found for this device.';
         }
+    }
 
-        function error(err) {
-            console.error(err);
-        }
+    function restartScan() {
+        location.reload(true);
+    }
+</script>
 
-        function parseQRResult(result) {
-            // Split the result by newline character
-            const lines = result.split('\n');
-            // Extract machine name and serial number
-            const name = lines[0].split(': ')[1];
-            const serialNumber = lines[1].split(': ')[1];
-
-            return { name, serialNumber };
-        }
-
-        function restartScan() {
-            location.reload(true);
-        }
-    </script>
 </body>
 </html>
- 
