@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bar Code Scanner App</title>
-    <!-- <link rel="stylesheet" href="/css/style.css"> -->
     <script src="../static/html5-qrcode.min.js"></script>
 </head>
 <body data-rsssl=1>
@@ -13,11 +12,13 @@
             <div id="reader"></div>
             <div id="result"></div>
             <div id="view_result">
+                <!-- Display machine details here -->
+                <h2 id="machineName"></h2>
+                <p id="serialNumber"></p>
             </div>
         </main>
     </div>
     <script>
-
         const scanner = new Html5QrcodeScanner('reader', {
             qrbox: {
                 width: 500,
@@ -26,16 +27,36 @@
             fps: 20,
         });
         scanner.render(success, error);
+
         async function success(result) {
-           console.log(result)
+            // Parse the result to extract machine name and serial number
+            const machineDetails = parseQRResult(result);
+
+            // Display machine details
+            document.getElementById("machineName").innerText = `Machine Name: ${machineDetails.name}`;
+            document.getElementById("serialNumber").innerText = `Serial Number: ${machineDetails.serialNumber}`;
+
             scanner.clear();
         }
+
         function error(err) {
             console.error(err);
         }
+
+        function parseQRResult(result) {
+            // Split the result by newline character
+            const lines = result.split('\n');
+            // Extract machine name and serial number
+            const name = lines[0].split(': ')[1];
+            const serialNumber = lines[1].split(': ')[1];
+
+            return { name, serialNumber };
+        }
+
         function restartScan() {
             location.reload(true);
         }
     </script>
 </body>
 </html>
+ 
