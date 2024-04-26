@@ -3,3 +3,4 @@ opencv-python-headless
 numpy
 gunicorn
 qrcode[pil]
+google-cloud-bigquery
